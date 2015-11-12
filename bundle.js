@@ -9632,6 +9632,8 @@
 })();
 
 },{}],3:[function(require,module,exports){
+'use strict';
+
 var queue = require('queue-async');
 var d3 = require('d3');
 var createPlot = require('./vis');
@@ -9655,6 +9657,7 @@ d3.select("#search").on("keyup", function () {
 });
 
 },{"./vis":4,"d3":1,"queue-async":2}],4:[function(require,module,exports){
+'use strict';
 
 var d3 = require('d3');
 
@@ -9669,7 +9672,7 @@ function getPairs(arr) {
 }
 
 function prepareData(rawData) {
-  var data = rawData.map(rd => {
+  var data = rawData.map(function (rd) {
     var d = {};
     d.conf_id = rd.conf_id;
     d.conf = rd.conf;
@@ -9682,26 +9685,36 @@ function prepareData(rawData) {
 
   var order = ['visualized', 'eyeo', 'tapestry', 'openvis'];
 
-  var nest = d3.nest().key(d => d.conf).sortKeys((a, b) => order.indexOf(a) - order.indexOf(b)).key(d => d.year).sortKeys(d3.ascending).entries(data);
+  var nest = d3.nest().key(function (d) {
+    return d.conf;
+  }).sortKeys(function (a, b) {
+    return order.indexOf(a) - order.indexOf(b);
+  }).key(function (d) {
+    return d.year;
+  }).sortKeys(d3.ascending).entries(data);
 
   return nest;
 }
 
 function groupByPeople(nest) {
   var allFolks = [];
-  nest.forEach(conf => {
-    conf.values.forEach(year => {
+  nest.forEach(function (conf) {
+    conf.values.forEach(function (year) {
       allFolks = allFolks.concat(year.values);
       // = d3.map(year.values, d => d.id);
     });
   });
-  var byFolk = d3.nest().key(d => d.id).entries(allFolks);
+  var byFolk = d3.nest().key(function (d) {
+    return d.id;
+  }).entries(allFolks);
   return byFolk;
 }
 
 function generateLinks(byFolk) {
   var pairs = [];
-  byFolk.filter(d => d.values.length > 1).forEach(d => {
+  byFolk.filter(function (d) {
+    return d.values.length > 1;
+  }).forEach(function (d) {
     pairs = pairs.concat(getPairs(d.values));
   });
   return pairs;
@@ -9723,12 +9736,14 @@ module.exports = function createChart() {
 
   var yearScale = d3.scale.ordinal().domain([2013, 2014, 2015]).rangeRoundBands([0, width]);
 
-  var chart = function (selection) {
+  var chart = function chart(selection) {
     selection.each(function (rawData) {
       data = prepareData(rawData);
       folks = groupByPeople(data);
       links = generateLinks(folks);
-      folks = d3.map(folks, d => d.key);
+      folks = d3.map(folks, function (d) {
+        return d.key;
+      });
 
       var svg = d3.select(this).selectAll("svg").data([data]);
       svg.enter().append("svg").append("g");
@@ -9744,26 +9759,42 @@ module.exports = function createChart() {
   };
 
   function update() {
-    conf = g.select("#nodes").selectAll(".conf").data(data).enter().append("g").attr("class", d => `conf ${ d.key }`).attr("transform", (d, i) => `translate(0,${ i * (height / data.length) })`);
+    conf = g.select("#nodes").selectAll(".conf").data(data).enter().append("g").attr("class", function (d) {
+      return 'conf ' + d.key;
+    }).attr("transform", function (d, i) {
+      return 'translate(0,' + i * (height / data.length) + ')';
+    });
 
-    conf.append("text").text(d => d.key).attr("text-anchor", "end").attr("dx", -12).attr("dy", 4);
+    conf.append("text").text(function (d) {
+      return d.key;
+    }).attr("text-anchor", "end").attr("dx", -12).attr("dy", 4);
 
     conf.append("line").attr("x1", 0).attr("x2", width).attr("y1", 0).attr("y2", 0).attr("opacity", 0.2).style("stroke-width", 1);
 
-    year = conf.selectAll(".year").data(d => d.values).enter().append("g").attr("class", "year").attr("transform", (d, i) => `translate(${ yearScale(d.key) },0)`);
+    year = conf.selectAll(".year").data(function (d) {
+      return d.values;
+    }).enter().append("g").attr("class", "year").attr("transform", function (d, i) {
+      return 'translate(' + yearScale(d.key) + ',0)';
+    });
 
-    year.append("text").attr("y", -50).text(d => d.key);
+    year.append("text").attr("y", -50).text(function (d) {
+      return d.key;
+    });
 
-    node = year.selectAll(".node").data(d => d.values).enter().append('g').each((d, i) => {
+    node = year.selectAll(".node").data(function (d) {
+      return d.values;
+    }).enter().append('g').each(function (d, i) {
       d.row = Math.floor(i / rowCount);
       d.col = i % rowCount;
       d.count = folks.get(d.id).values.length;
-    }).attr("class", "node").attr("transform", (d, i) => {
+    }).attr("class", "node").attr("transform", function (d, i) {
       var x = d.col * (radius * 2 + space);
       var y = d.row * (radius * 2 + space);
-      return `translate(${ x },${ y })`;
+      return 'translate(' + x + ',' + y + ')';
     });
-    node.append("circle").attr("r", radius).attr("cx", 0).attr("cy", 0).attr("opacity", d => 0.2 + 0.2 * d.count);
+    node.append("circle").attr("r", radius).attr("cx", 0).attr("cy", 0).attr("opacity", function (d) {
+      return 0.2 + 0.2 * d.count;
+    });
     node.on("mouseover", showName);
     node.on("mouseout", hideName);
 
@@ -9789,22 +9820,34 @@ module.exports = function createChart() {
     //   .y(function(d) { return d.loc.y - margin.top; })
     //   .interpolate("cardinal");
 
-    var diag = d3.svg.diagonal().source(d => d[0].loc).target(d => d[1].loc).projection(d => [d.x - margin.left, d.y - margin.top]);
+    var diag = d3.svg.diagonal().source(function (d) {
+      return d[0].loc;
+    }).target(function (d) {
+      return d[1].loc;
+    }).projection(function (d) {
+      return [d.x - margin.left, d.y - margin.top];
+    });
 
     var svgNode = d3.select("svg").node();
 
-    links.forEach(p => {
-      var source = node.filter(e => p[0].conf_id === e.conf_id && p[0].id === e.id);
+    links.forEach(function (p) {
+      var source = node.filter(function (e) {
+        return p[0].conf_id === e.conf_id && p[0].id === e.id;
+      });
       var convert = makeAbsoluteContext(source.node(), svgNode);
       var sourceAbs = convert(0, 0);
-      var target = node.filter(e => p[1].conf_id === e.conf_id && p[1].id === e.id);
+      var target = node.filter(function (e) {
+        return p[1].conf_id === e.conf_id && p[1].id === e.id;
+      });
       convert = makeAbsoluteContext(target.node(), svgNode);
       var targetAbs = convert(0, 0);
 
       p[0].loc = sourceAbs;
       p[1].loc = targetAbs;
     });
-    g.select("#links").selectAll('.link').data(links.filter(d => d[0].conf !== d[1].conf)).enter().append("path").attr("class", "link").attr("stroke", "#ddd").attr("fill", "none").attr("stroke-width", 1).attr("pointer-events", "none").attr("d", diag);
+    g.select("#links").selectAll('.link').data(links.filter(function (d) {
+      return d[0].conf !== d[1].conf;
+    })).enter().append("path").attr("class", "link").attr("stroke", "#ddd").attr("fill", "none").attr("stroke-width", 1).attr("pointer-events", "none").attr("d", diag);
 
     // g.select("#links").selectAll('.link')
     //   .data(links)
@@ -9820,10 +9863,16 @@ module.exports = function createChart() {
   }
 
   function showName(d) {
-    var n = node.filter(e => e.id === d.id);
-    n.append("text").text(() => d.name).attr("text-anchor", "middle").attr("y", e => e.row * (radius * 2) * -1).attr("dy", -10);
+    var n = node.filter(function (e) {
+      return e.id === d.id;
+    });
+    n.append("text").text(function () {
+      return d.name;
+    }).attr("text-anchor", "middle").attr("y", function (e) {
+      return e.row * (radius * 2) * -1;
+    }).attr("dy", -10);
     n.select("circle").classed("highlight", true);
-    g.select("#links").selectAll(".link").filter(e => {
+    g.select("#links").selectAll(".link").filter(function (e) {
       return e[0].id === d.id;
     }).classed("highlight", true);
   }
