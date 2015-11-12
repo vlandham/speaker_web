@@ -217,7 +217,7 @@ module.exports = function createChart() {
     //   .attr("pointer-events", "none");
   }
 
-  function showName(d,i) {
+  function showName(d) {
     var n = node.filter(e => e.id === d.id);
     n.append("text")
       .text(() => d.name)
@@ -229,11 +229,10 @@ module.exports = function createChart() {
     g.select("#links").selectAll(".link").filter(e => {
       return e[0].id === d.id;
     })
-      .each(e => console.log(e))
       .classed("highlight", true);
   }
 
-  function hideName(d,i) {
+  function hideName(d) {
     node.select("text")
       .remove();
     node
@@ -242,6 +241,26 @@ module.exports = function createChart() {
     g.select("#links").selectAll(".link")
       .classed("highlight", false);
   }
+
+  chart.search = function(searchTerm) {
+    if (!arguments.length) {
+      return chart;
+    }
+    if(searchTerm.length > 0) {
+      var searchRegEx = new RegExp(searchTerm.toLowerCase().replace(" ", "_"));
+      node
+      .each(function(d) {
+        if(d.id.search(searchRegEx) >= 0) {
+          d3.select(this).select("circle").classed("highlight", true);
+        } else {
+          d3.select(this).select("circle").classed("highlight", false);
+        }
+      });
+    } else {
+      node.select("circle").classed("highlight", false);
+    }
+    return chart;
+  };
 
   return chart;
 };

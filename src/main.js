@@ -18,3 +18,9 @@ function display(error, data) {
 queue()
   .defer(d3.csv, "data/conf_speakers.csv")
   .await(display);
+
+ d3.select("#search").on("keyup", function() {
+   var searchTerm = this.value;
+   console.log(searchTerm);
+   plot.search(searchTerm);
+ });

@@ -9648,6 +9648,12 @@ function display(error, data) {
 
 queue().defer(d3.csv, "data/conf_speakers.csv").await(display);
 
+d3.select("#search").on("keyup", function () {
+  var searchTerm = this.value;
+  console.log(searchTerm);
+  plot.search(searchTerm);
+});
+
 },{"./vis":4,"d3":1,"queue-async":2}],4:[function(require,module,exports){
 
 var d3 = require('d3');
@@ -9813,20 +9819,39 @@ module.exports = function createChart() {
     //   .attr("pointer-events", "none");
   }
 
-  function showName(d, i) {
+  function showName(d) {
     var n = node.filter(e => e.id === d.id);
     n.append("text").text(() => d.name).attr("text-anchor", "middle").attr("y", e => e.row * (radius * 2) * -1).attr("dy", -10);
     n.select("circle").classed("highlight", true);
     g.select("#links").selectAll(".link").filter(e => {
       return e[0].id === d.id;
-    }).each(e => console.log(e)).classed("highlight", true);
+    }).classed("highlight", true);
   }
 
-  function hideName(d, i) {
+  function hideName(d) {
     node.select("text").remove();
     node.select("circle").classed("highlight", false);
     g.select("#links").selectAll(".link").classed("highlight", false);
   }
+
+  chart.search = function (searchTerm) {
+    if (!arguments.length) {
+      return chart;
+    }
+    if (searchTerm.length > 0) {
+      var searchRegEx = new RegExp(searchTerm.toLowerCase().replace(" ", "_"));
+      node.each(function (d) {
+        if (d.id.search(searchRegEx) >= 0) {
+          d3.select(this).select("circle").classed("highlight", true);
+        } else {
+          d3.select(this).select("circle").classed("highlight", false);
+        }
+      });
+    } else {
+      node.select("circle").classed("highlight", false);
+    }
+    return chart;
+  };
 
   return chart;
 };
